@@ -5,6 +5,9 @@ Probleme du voyageur
 import pygame
 
 
+cities = list()
+
+
 class Individual:
     """Individual representation"""
     path = list()
@@ -45,10 +48,22 @@ class City:
     """City representation"""
     pos_x = int()
     pos_y = int()
+    name = str()
 
-    def __init__(self, pos_x=0, pos_y=0):
+    def __init__(self, pos_x=0, pos_y=0, name=""):
         self.pos_x = pos_x
         self.pos_y = pos_y
+        self.name = name
+
+    def __str__(self):
+        return f"{self.name} ({self.pos_x}, {self.pos_y})"
+
+    @staticmethod
+    def load_cities(filename):
+        with open(filename) as file:
+            for line in file:
+                name, pos_x, pos_y = line.split()
+                cities.append(City(pos_x, pos_y, name))
 
 
 def distance_between_cities(a: City, b: City) -> int:
@@ -62,8 +77,10 @@ def hybridization(a: Individual, b: Individual) -> Individual:
 
 def ga_solve(file=None, gui=True, maxtime=0):
     """Algorithm"""
-    population = Population(1, 0.5)
+    if file is not None:
+        City.load_cities(file)
+    # print("\n".join([str(city) for city in cities]))
 
 
 if __name__ == "__main__":
-    ga_solve()
+    ga_solve(file="data/pb005.txt")
