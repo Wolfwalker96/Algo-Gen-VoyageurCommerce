@@ -50,6 +50,63 @@ class Population:
         return func(self.individuals)
 
 
+class Window:
+    import pygame
+
+    screen_x = 500
+    screen_y = 500
+
+    city_color = [10, 10, 200]  # blue
+    city_radius = 3
+
+    font_color = [255, 255, 255]  # white
+
+    pygame.init()
+    window = pygame.display.set_mode((screen_x, screen_y))
+    pygame.display.set_caption('Exemple')
+    screen = pygame.display.get_surface()
+    font = pygame.font.Font(None, 30)
+
+    def draw(self, positions):
+        self.screen.fill(0)
+        for pos in positions:
+            pygame.draw.circle(self.screen, self.city_color, (pos.pos_x, pos.pos_y), self.city_radius)
+        text = self.font.render("Nombre: %i" % len(positions), True, self.font_color)
+        text_rect = text.get_rect()
+        self.screen.blit(text, text_rect)
+        pygame.display.flip()
+
+    def show(self):
+        from pygame.locals import KEYDOWN, QUIT, MOUSEBUTTONDOWN, K_RETURN, K_ESCAPE
+        import sys
+        self.draw(cities)
+
+        collecting = True
+
+        while collecting:
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    return
+                elif event.type == KEYDOWN and event.key == K_RETURN:
+                    collecting = False
+                elif event.type == MOUSEBUTTONDOWN:
+                    cities.append(City(name=f"v{len(cities)}",
+                                       pos_x=pygame.mouse.get_pos()[0],
+                                       pos_y=pygame.mouse.get_pos()[1]))
+                    self.draw(cities)
+
+        self.screen.fill(0)
+        pygame.draw.lines(self.screen, self.city_color, True, cities)
+        text = self.font.render("Un chemin, pas le meilleur!", True, self.font_color)
+        textRect = text.get_rect()
+        self.screen.blit(text, textRect)
+        pygame.display.flip()
+
+        while True:
+            event = pygame.event.wait()
+            if event.type == KEYDOWN: break
+
+
 class City:
     """City representation"""
     pos_x = int()
@@ -85,8 +142,12 @@ def ga_solve(file=None, gui=True, maxtime=0):
     """Algorithm"""
     if file is not None:
         City.load_cities(file)
-    # print("\n".join([str(city) for city in cities]))
+    else:
+        win = Window()
+        win.show()
+
+    print("\n".join([str(city) for city in cities]))
 
 
 if __name__ == "__main__":
-    ga_solve(file="data/pb005.txt")
+    ga_solve(file=None)
