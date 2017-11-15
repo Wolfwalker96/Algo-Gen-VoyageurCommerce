@@ -51,6 +51,11 @@ class City:
         self.pos_y = pos_y
 
 
+def distance_between_cities(a: City, b: City) -> int:
+    """Returns the distance squared between cites a and b."""
+    return abs(a.pos_x - b.pos_x)+abs(a.pos_y-b.pos_y)
+
+
 def hybridization(a: Individual, b: Individual) -> Individual:
     return a
 
