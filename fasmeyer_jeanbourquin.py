@@ -1,12 +1,12 @@
-"""
+'''
 Probleme du voyageur
-"""
+'''
 
 import pygame
 
 
 class Individual:
-    """Individual representation"""
+    '''Individual representation.'''
     path = list()
 
     def __init__(self, path):
@@ -16,8 +16,9 @@ class Individual:
         distance = 0
         for city in self.path:
             pass
+        return distance
 
-    def mutation(self):
+    def mutate(self):
         pass
 
 
@@ -42,7 +43,7 @@ class Population:
 
 
 class City:
-    """City representation"""
+    '''City representation'''
     pos_x = int()
     pos_y = int()
 
@@ -56,7 +57,7 @@ def hybridization(a: Individual, b: Individual) -> Individual:
 
 
 def ga_solve(file=None, gui=True, maxtime=0):
-    """Algorithm"""
+    '''Algorithm'''
     population = Population(1, 0.5)
 
 
