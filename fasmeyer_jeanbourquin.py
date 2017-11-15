@@ -9,7 +9,7 @@ cities = list()
 
 
 class Individual:
-    """Individual representation"""
+    """Individual representation."""
     path = list()
 
     def __init__(self, path):
@@ -19,8 +19,9 @@ class Individual:
         distance = 0
         for city in self.path:
             pass
+        return distance
 
-    def mutation(self):
+    def mutate(self):
         pass
 
 
