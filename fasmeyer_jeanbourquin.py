@@ -3,6 +3,7 @@ Probleme du voyageur
 """
 
 import pygame
+from random import randint, getrandbits, shuffle
 
 
 cities = list()
@@ -16,13 +17,13 @@ class Individual:
         self.path = path
 
     def fitness(self):
-        distance = 0
-        for city in self.path:
-            pass
-        return distance
+        return self.reduce(distance_between_cities, self.path)
 
     def mutate(self):
-        pass
+        """Mutate once, swap two genes."""
+        pos, dist = randint(0, len(self.path)), randint(0, len(self.path))
+        newpos = (pos + dist) % len(self.path)
+        self.path[newpos], self.path[pos] = self.path[pos], self.path[newpos]
 
 
 class Population:
@@ -33,6 +34,10 @@ class Population:
     def __init__(self, size, mutation_rate):
         self.size = size
         self.mutation_rate = mutation_rate
+
+    def init_population(self):
+        for i in range(0, self.size):
+            self.individuals.append(Individual(cities.shuffle))
 
     def reproduce(self):
         elites = self.select()
@@ -124,12 +129,12 @@ class City:
                 cities.append(City(pos_x, pos_y, name))
 
 
-def distance_between_cities(a: City, b: City) -> int:
+def distance_between_cities(a: City, b: City):
     """Returns the distance squared between cites a and b."""
     return abs(a.pos_x - b.pos_x)**2+abs(a.pos_y-b.pos_y)**2
 
 
-def hybridization(a: Individual, b: Individual) -> Individual:
+def hybridization(a: Individual, b: Individual):
     return a
 
 
