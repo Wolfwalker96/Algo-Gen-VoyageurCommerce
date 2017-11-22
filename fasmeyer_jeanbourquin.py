@@ -3,10 +3,22 @@ Probleme du voyageur
 """
 
 import pygame
-from random import randint, getrandbits, shuffle
+from random import randint, getrandbits, shuffle, random
+from functools import reduce
 
 
 cities = list()
+
+
+class SelectMethod:
+
+    @staticmethod
+    def wheel(individuals):
+        pass
+
+    @staticmethod
+    def elites(individuals):
+        return individuals[:20]
 
 
 class Individual:
@@ -16,14 +28,17 @@ class Individual:
     def __init__(self, path):
         self.path = path
 
+    def __str__(self):
+        return f"{self.fitness()} - {', '.join([city.name for city in self.path])}"
+
     def fitness(self):
-        return self.reduce(distance_between_cities, self.path)
+        return reduce(lambda x, y: x + y, [distance_between_cities(self.path[j[0]], self.path[(j[0] + 1) % len(self.path)]) for j in enumerate(self.path)])
 
     def mutate(self):
         """Mutate once, swap two genes."""
-        pos, dist = randint(0, len(self.path)), randint(0, len(self.path))
-        newpos = (pos + dist) % len(self.path)
-        self.path[newpos], self.path[pos] = self.path[pos], self.path[newpos]
+        pos, dist = randint(0, len(self.path)-1), randint(0, len(self.path))
+        new_pos = (pos + dist) % len(self.path)
+        self.path[new_pos], self.path[pos] = self.path[pos], self.path[new_pos]
 
 
 class Population:
@@ -35,18 +50,22 @@ class Population:
         self.size = size
         self.mutation_rate = mutation_rate
 
+    def __str__(self):
+        return str(self.individuals[0])
+
     def init_population(self):
         for i in range(0, self.size):
             self.individuals.append(Individual(cities.shuffle))
 
     def reproduce(self):
-        elites = self.select()
+        elites = self.select(SelectMethod.elites(self.individuals))
         self.individuals.clear()
         for a, b in (range(0, elites.length(), 2), range(1, elites.length(), 2)):
             self.individuals.append(hybridization(elites[a], elites[b]))
             self.individuals.append(hybridization(elites[b], elites[a]))
 
     def select(self, func):
+        sorted(self.individuals, key=lambda x: x.fitness())
         return func(self.individuals)
 
 
@@ -147,6 +166,10 @@ def ga_solve(file=None, gui=True, maxtime=0):
         win.show()
 
     print("\n".join([str(city) for city in cities]))
+    test = Individual(cities)
+    print(test)
+    test.mutate()
+    print(test)
 
 
 if __name__ == "__main__":
