@@ -91,7 +91,7 @@ class Window:
                     self.draw(cities)
 
         self.screen.fill(0)
-        pygame.draw.lines(self.screen, self.city_color, True, cities)
+        pygame.draw.lines(self.screen, self.city_color, True, [(city.pos_x, city.pos_y) for city in cities])
         text = self.font.render("Un chemin, pas le meilleur!", True, self.font_color)
         textRect = text.get_rect()
         self.screen.blit(text, textRect)
@@ -126,7 +126,7 @@ class City:
 
 def distance_between_cities(a: City, b: City) -> int:
     """Returns the distance squared between cites a and b."""
-    return abs(a.pos_x - b.pos_x)+abs(a.pos_y-b.pos_y)
+    return abs(a.pos_x - b.pos_x)**2+abs(a.pos_y-b.pos_y)**2
 
 
 def hybridization(a: Individual, b: Individual) -> Individual:
