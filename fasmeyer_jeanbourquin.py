@@ -158,31 +158,31 @@ def hybridization(a: Individual, b: Individual):
     fb =  True
     # Choose random town.
     n = len(a.path)
-    startTown = a.path[randint(n)]
-    # Find where startTown is in x.
-    x = a.path.get_pos(startTown)
-    # Find where startTown is in y.
-    y = b.path.get_pos(startTown)
-    g = [startTown]
+    start_town = a.path[randint(n)]
+    # Find where start_town is in x.
+    x = a.path.get_pos(start_town)
+    # Find where start_town is in y.
+    y = b.path.get_pos(start_town)
+    g = [start_town]
     # Copy of all towns.
-    c = list(a)
+    c = list(a.path)
 
-    while fa == True and fb == True:
+    while fa is True and fb is True:
         x = (x - 1) % n
         y = (y + 1) % n
         ax = a.path[x]
         by = a.path[y]
-        if(fa == True):
+        if fa is True:
             if ax not in g:
-                g =  g.insert(0, ax)
+                g = g.insert(0, ax)
                 c.remove(ax)
             else:
                 fa = False
 
-        if(fb == True):
-            if bx not in g:
-                g =  g.append(by)
-                c.remove(bx)
+        if fb is True:
+            if by not in g:
+                g = g.append(by)
+                c.remove(by)
             else:
                 fb = False
     if len(g) < n:
