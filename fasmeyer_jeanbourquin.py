@@ -26,13 +26,16 @@ class Individual:
     path = list()
 
     def __init__(self, path):
-        self.path = path
+        self.path = list(path)
 
     def __str__(self):
         return f"{self.fitness()} - {', '.join([city.name for city in self.path])}"
 
     def fitness(self):
-        return reduce(lambda x, y: x + y, [distance_between_cities(self.path[j[0]], self.path[(j[0] + 1) % len(self.path)]) for j in enumerate(self.path)])
+        sum = 0
+        for j, city in enumerate(self.path):
+            sum += distance_between_cities(city, self.path[(j+1) % len(self.path)])
+        return sum
 
     def mutate(self):
         """Mutate once, swap two genes."""
@@ -49,18 +52,21 @@ class Population:
     def __init__(self, size, mutation_rate):
         self.size = size
         self.mutation_rate = mutation_rate
+        self.init_population()
 
     def __str__(self):
         return str(self.individuals[0])
 
     def init_population(self):
         for i in range(0, self.size):
-            self.individuals.append(Individual(cities.shuffle))
+            tmp = list(cities)
+            shuffle(tmp)
+            self.individuals.append(Individual(tmp))
 
     def reproduce(self):
-        elites = self.select(SelectMethod.elites(self.individuals))
+        elites = self.select(SelectMethod.elites)
         self.individuals.clear()
-        for a, b in (range(0, elites.length(), 2), range(1, elites.length(), 2)):
+        for a, b in (range(0, len(elites), 2), range(1, len(elites), 2)):
             self.individuals.append(hybridization(elites[a], elites[b]))
             self.individuals.append(hybridization(elites[b], elites[a]))
 
@@ -80,12 +86,6 @@ class Window:
 
     font_color = [255, 255, 255]  # white
 
-    pygame.init()
-    window = pygame.display.set_mode((screen_x, screen_y))
-    pygame.display.set_caption('Exemple')
-    screen = pygame.display.get_surface()
-    font = pygame.font.Font(None, 30)
-
     def draw(self, positions):
         self.screen.fill(0)
         for pos in positions:
@@ -97,7 +97,11 @@ class Window:
 
     def show(self):
         from pygame.locals import KEYDOWN, QUIT, MOUSEBUTTONDOWN, K_RETURN, K_ESCAPE
-        import sys
+        pygame.init()
+        self.window = pygame.display.set_mode((self.screen_x, self.screen_y))
+        pygame.display.set_caption('Exemple')
+        self.screen = pygame.display.get_surface()
+        self.font = pygame.font.Font(None, 30)
         self.draw(cities)
 
         collecting = True
@@ -145,7 +149,7 @@ class City:
         with open(filename) as file:
             for line in file:
                 name, pos_x, pos_y = line.split()
-                cities.append(City(pos_x, pos_y, name))
+                cities.append(City(int(pos_x), int(pos_y), name))
 
 
 def distance_between_cities(a: City, b: City):
@@ -155,15 +159,15 @@ def distance_between_cities(a: City, b: City):
 
 def hybridization(a: Individual, b: Individual):
     fa = True
-    fb =  True
+    fb = True
     # Choose random town.
     n = len(a.path)
-    start_town = a.path[randint(n)]
+    start_town = a.path[randint(0, n-1)]
     # Find where start_town is in x.
-    x = a.path.get_pos(start_town)
+    x = a.path.index(start_town)
     # Find where start_town is in y.
-    y = b.path.get_pos(start_town)
-    g = [start_town]
+    y = b.path.index(start_town)
+    g = list()
     # Copy of all towns.
     c = list(a.path)
 
@@ -174,22 +178,22 @@ def hybridization(a: Individual, b: Individual):
         by = a.path[y]
         if fa is True:
             if ax not in g:
-                g = g.insert(0, ax)
+                g.insert(0, ax)
                 c.remove(ax)
             else:
                 fa = False
 
         if fb is True:
             if by not in g:
-                g = g.append(by)
+                g.append(by)
                 c.remove(by)
             else:
                 fb = False
     if len(g) < n:
         # Add rest of rows at random.
-        c.shuffle()
+        shuffle(c)
         g.extend(c)
-    return g
+    return Individual(g)
 
 
 def ga_solve(file=None, gui=True, maxtime=0):
@@ -200,12 +204,21 @@ def ga_solve(file=None, gui=True, maxtime=0):
         win = Window()
         win.show()
 
-    print("\n".join([str(city) for city in cities]))
+    #print("\n".join([str(city) for city in cities]))
     test = Individual(cities)
+    tmp = list(cities)
+    shuffle(tmp)
+    test2 = Individual(tmp)
     print(test)
     test.mutate()
     print(test)
 
+    print(test2)
+    print(hybridization(test, test2))
+
+    pop = Population(100, 0.3)
+    pop.reproduce()
+
 
 if __name__ == "__main__":
-    ga_solve(file=None)
+    ga_solve(file="data/pb020.txt")
