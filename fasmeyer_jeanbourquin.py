@@ -135,6 +135,23 @@ def distance_between_cities(a: City, b: City):
 
 
 def hybridization(a: Individual, b: Individual):
+    fa = True
+    fb =  True
+    n = len(a.path)
+    startTown = a.path[randint(n)]
+    x = a.path.get_pos(startTown)
+    y = b.path.get_pos(startTown)
+    g = startTown
+
+
+    while(fa == True and fb == True):
+        x = (x - 1) % n
+        y = (y + 1) % n
+        if(fa == True):
+            if(ax in g):
+                pass
+        pass
+
     return a
 
 
