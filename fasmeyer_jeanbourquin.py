@@ -156,22 +156,40 @@ def distance_between_cities(a: City, b: City):
 def hybridization(a: Individual, b: Individual):
     fa = True
     fb =  True
+    # Choose random town.
     n = len(a.path)
     startTown = a.path[randint(n)]
+    # Find where startTown is in x.
     x = a.path.get_pos(startTown)
+    # Find where startTown is in y.
     y = b.path.get_pos(startTown)
-    g = startTown
+    g = [startTown]
+    # Copy of all towns.
+    c = list(a)
 
-
-    while(fa == True and fb == True):
+    while fa == True and fb == True:
         x = (x - 1) % n
         y = (y + 1) % n
+        ax = a.path[x]
+        by = a.path[y]
         if(fa == True):
-            if(ax in g):
-                pass
-        pass
+            if ax not in g:
+                g =  g.insert(0, ax)
+                c.remove(ax)
+            else:
+                fa = False
 
-    return a
+        if(fb == True):
+            if bx not in g:
+                g =  g.append(by)
+                c.remove(bx)
+            else:
+                fb = False
+    if len(g) < n:
+        # Add rest of rows at random.
+        c.shuffle()
+        g.extend(c)
+    return g
 
 
 def ga_solve(file=None, gui=True, maxtime=0):
