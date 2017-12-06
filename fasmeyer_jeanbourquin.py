@@ -66,7 +66,7 @@ class Population:
     def reproduce(self):
         elites = self.select(SelectMethod.elites)
         self.individuals.clear()
-        for a, b in (range(0, len(elites), 2), range(1, len(elites), 2)):
+        for a, b in zip(range(0, len(elites), 2), range(1, len(elites), 2)):
             self.individuals.append(hybridization(elites[a], elites[b]))
             self.individuals.append(hybridization(elites[b], elites[a]))
 
