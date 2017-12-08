@@ -204,7 +204,8 @@ def ga_solve(file=None, gui=True, max_time=0):
     last_elites = list()
     while (((time()-start_time) < max_time) and max_time > 0) or False:
         last_elites.append(pop.reproduce())
-    return last_elites[-1].fitness, [city.name for city in last_elites[-1].path]
+    sorted(last_elites, key=lambda c: c.fitness)
+    return last_elites[0].fitness, [city.name for city in last_elites[0].path]
 
 
 if __name__ == "__main__":
@@ -220,4 +221,5 @@ if __name__ == "__main__":
         else:
             file = arg
 
-    ga_solve(file=file, max_time=max_time, gui=gui)
+    length, path = ga_solve(file=file, max_time=max_time, gui=gui)
+    print(f"Distance : {int(length)}\nChemin : {', '.join(path)}")
