@@ -3,11 +3,8 @@ Probleme du voyageur
 """
 
 import pygame
-from random import randint, getrandbits, shuffle, random
-from functools import reduce
-
-
-cities = list()
+from random import randint, shuffle
+from math import sqrt
 
 
 class SelectMethod:
@@ -18,12 +15,11 @@ class SelectMethod:
 
     @staticmethod
     def elites(individuals):
-        return individuals[:20]
+        return individuals[:50]
 
 
 class Individual:
     """Individual representation."""
-    path = list()
 
     def __init__(self, path):
         self.path = list(path)
@@ -31,10 +27,11 @@ class Individual:
     def __str__(self):
         return f"{self.fitness()} - {', '.join([city.name for city in self.path])}"
 
+    @property
     def fitness(self):
         sum = 0
         for j, city in enumerate(self.path):
-            sum += distance_between_cities(city, self.path[(j+1) % len(self.path)])
+            sum += sqrt(distance_between_cities(city, self.path[(j+1) % len(self.path)]))
         return sum
 
     def mutate(self):
@@ -45,13 +42,11 @@ class Individual:
 
 
 class Population:
-    size = int()
-    mutation_rate = int()
-    individuals = list()
 
     def __init__(self, size, mutation_rate):
         self.size = size
         self.mutation_rate = mutation_rate
+        self.individuals = list()
         self.init_population()
 
     def __str__(self):
@@ -69,14 +64,14 @@ class Population:
         for a, b in zip(range(0, len(elites), 2), range(1, len(elites), 2)):
             self.individuals.append(hybridization(elites[a], elites[b]))
             self.individuals.append(hybridization(elites[b], elites[a]))
+        return elites[0]
 
     def select(self, func):
-        sorted(self.individuals, key=lambda x: x.fitness())
+        sorted(self.individuals, key=lambda x: x.fitness)
         return func(self.individuals)
 
 
 class Window:
-    import pygame
 
     screen_x = 500
     screen_y = 500
@@ -132,9 +127,6 @@ class Window:
 
 class City:
     """City representation"""
-    pos_x = int()
-    pos_y = int()
-    name = str()
 
     def __init__(self, pos_x=0, pos_y=0, name=""):
         self.pos_x = pos_x
@@ -196,29 +188,36 @@ def hybridization(a: Individual, b: Individual):
     return Individual(g)
 
 
-def ga_solve(file=None, gui=True, maxtime=0):
+def ga_solve(file=None, gui=True, max_time=0):
     """Algorithm"""
+    global cities
+    cities = list()
     if file is not None:
         City.load_cities(file)
     else:
         win = Window()
         win.show()
 
-    #print("\n".join([str(city) for city in cities]))
-    test = Individual(cities)
-    tmp = list(cities)
-    shuffle(tmp)
-    test2 = Individual(tmp)
-    print(test)
-    test.mutate()
-    print(test)
-
-    print(test2)
-    print(hybridization(test, test2))
-
+    from time import time
+    start_time = time()
     pop = Population(100, 0.3)
-    pop.reproduce()
+    last_elites = list()
+    while (((time()-start_time) < max_time) and max_time > 0) or False:
+        last_elites.append(pop.reproduce())
+    return last_elites[-1].fitness, [city.name for city in last_elites[-1].path]
 
 
 if __name__ == "__main__":
-    ga_solve(file="data/pb020.txt")
+    from sys import argv
+    file = None
+    gui = True
+    max_time = 0
+    for i, arg in enumerate(argv[1:]):
+        if arg == "--nogui":
+            gui = False
+        elif arg == "--maxtime":
+            max_time = int(argv[i+2])
+        else:
+            file = arg
+
+    ga_solve(file=file, max_time=max_time, gui=gui)
