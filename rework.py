@@ -24,27 +24,26 @@ class City:
                 cities.append(City(int(pos_x), int(pos_y), name))
 
 
-class Gene:
-
-    def __init__(self, path):
-        self.path = list(path)
+class Chromosome:
+    """Use genes to represent the path. Each gene is a city."""
+    def __init__(self, genes):
+        self.genes = list(genes)
         self.fit = None
 
     def __str__(self):
-        return f"{self.fitness} ({', '.join([city.name for city in self.path])})"
-        #return f"{[city.name for city in self.path]}"
+        return f"{self.fitness} ({', '.join([city.name for city in self.genes])})"
+        #return f"{[city.name for city in self.genes]}"
 
     @property
     def fitness(self):
         """Return a fitness based on the squared path length."""
         if self.fit is None:
             sum = 0
-            for i in range(1, len(self.path)):
-                sum += distance_between_cities(self.path[i-1], self.path[i])
+            for i in range(1, len(self.genes)):
+                sum += distance_between_cities(self.genes[i-1], self.genes[i])
 
             self.fit = 1/sum
             return 1/sum
-
         else:
             return self.fit
 
@@ -53,17 +52,17 @@ class Population:
 
     def __init__(self, size):
         self.size = size
-        self.genes = list()
+        self.chromosomes = list()
         self.init_population()
 
     def __str__(self):
-        return str(self.genes[0])
+        return str(self.chromosomes[0])
 
     def init_population(self):
         for i in range(0, self.size):
             tmp = list(cities)
             shuffle(tmp)
-            self.genes.append(Gene(tmp))
+            self.chromosomes.append(Chromosome(tmp))
 
 
 class Window:
@@ -119,54 +118,74 @@ class Window:
             event = pygame.event.wait()
             if event.type == KEYDOWN: break
 
-# TO TEST.
-def path_length(path : list):
-    """Return the length of a path."""
+
+class GA:
+    def __init__(self, population_size, mutation_rate):
+        self.pop_size = population_size
+        self.mut_rate = mutation_rate
+
+    def mutate(chromosome):
+        """Mutate the chromosome by swapping..
+        Will never swap the same genes twice (see: position, distance)
+        Made to use two random only.
+        """
+        genes_size = len(chromosome.genes)
+        for pos in range(0, genes_size):
+            # Do we mutate this chromosome?
+            if(random() < self.mutation_rate):
+                dist = randint(0, genes_size)
+                new_pos = (pos + dist) % genes_size
+                temp = individual.genes[new_pos]
+                individual.genes[new_pos] = individual.genes[pos]
+                individual.genes[pos] = temp
+
+    def crossover(a: Chromosome, b: Chromosome):
+        fa = True
+        fb = True
+        # Choose random town, find where it is within a and b.
+        n = len(a.genes)
+        start_town = a.genes[randint(0, n-1)]
+        x = a.genes.index(start_town)
+        y = b.genes.index(start_town)
+        g = list()
+        c = list(a.genes)
+
+        while fa is True and fb is True:
+            x = (x - 1) % n
+            y = (y + 1) % n
+            ax = a.genes[x]
+            by = a.genes[y]
+            if fa is True:
+                if ax not in g:
+                    g.insert(0, ax)
+                    c.remove(ax) # Too slow!
+                else:
+                    fa = False
+
+            if fb is True:
+                if by not in g:
+                    g.append(by)
+                    c.remove(by)
+                else:
+                    fb = False
+        if len(g) < n:
+            # Add rest of rows at random.
+            shuffle(c)
+            g.extend(c)
+        return Individual(g)
+
+
+def genes_length(genes : list):
+    """Return the length of a genes."""
     sum = 0
-    for i in range(1, len(path)):
-        sum += sqrt( distance_between_cities(path[i-1], path[i]) )
+    for i in range(1, len(genes)):
+        sum += sqrt( distance_between_cities(genes[i-1], genes[i]) )
     return sum
 
-# TO TEST.
+
 def distance_between_cities(a: City, b: City):
     """Returns the squared distance between city a and b."""
     return abs(a.pos_x - b.pos_x)**2+abs(a.pos_y-b.pos_y)**2
-
-# TO OPTIMIZE (c.remove is bad)
-def crossover(a: Gene, b: Gene):
-    fa = True
-    fb = True
-    # Choose random town, find where it is within a and b.
-    n = len(a.path)
-    start_town = a.path[randint(0, n-1)]
-    x = a.path.index(start_town)
-    y = b.path.index(start_town)
-    g = list()
-    c = list(a.path)
-
-    while fa is True and fb is True:
-        x = (x - 1) % n
-        y = (y + 1) % n
-        ax = a.path[x]
-        by = a.path[y]
-        if fa is True:
-            if ax not in g:
-                g.insert(0, ax)
-                c.remove(ax) # Too slow!
-            else:
-                fa = False
-
-        if fb is True:
-            if by not in g:
-                g.append(by)
-                c.remove(by)
-            else:
-                fb = False
-    if len(g) < n:
-        # Add rest of rows at random.
-        shuffle(c)
-        g.extend(c)
-    return Individual(g)
 
 
 def ga_solve(file=None, gui=True, max_time=0):
@@ -181,21 +200,18 @@ def ga_solve(file=None, gui=True, max_time=0):
 
     from time import time
     start_time = time()
-    population = Population(1000)
+    population = Population(100)
 
-    best_genes = list()
+    best_chromosomes = list()
     while ((time()-start_time) < max_time) or False:
-        # loop once the GA and get the best of this generation
+        # loop once the GA and get the best of this chromosomeration
         pass
-    #sorted(best_genes, key=lambda c: c.fitness)
-    #return best_genes[0].fitness, [city.name for city in best_genes[0].path]
+    #sorted(best_chromosomes, key=lambda c: c.fitness)
+    #return best_chromosomes[0].fitness, [city.name for city in best_chromosomes[0].genes]
 
     # Testing
-    a = population.genes
-    b = max(a, key=lambda g : g.fitness)
-    for gene in a:
-        print(gene)
-    print(path_length(b.path))
+    for chromosome in population.chromosomes:
+        print(chromosome)
 
     return None, None
 
@@ -213,5 +229,5 @@ if __name__ == "__main__":
         else:
             file = arg
 
-    length, path = ga_solve(file=file, max_time=max_time, gui=gui)
-    #print(f"Distance : {int(length)}\nChemin : {', '.join(path)}")
+    length, genes = ga_solve(file=file, max_time=max_time, gui=gui)
+    #print(f"Distance : {int(length)}\nChemin : {', '.join(genes)}")
