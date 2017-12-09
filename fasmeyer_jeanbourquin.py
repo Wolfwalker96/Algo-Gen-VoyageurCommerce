@@ -3,19 +3,33 @@ Probleme du voyageur
 """
 
 import pygame
-from random import randint, shuffle
+from random import randint, shuffle, random
 from math import sqrt
 
 
 class SelectMethod:
 
     @staticmethod
-    def wheel(individuals):
-        pass
+    def tournament(individuals):
+        TOURNAMENT_SIZE = 5
+        winners = list()
+        number_of_parents = len(individuals)
+        winners = list()
+        for i in range(0, number_of_parents):
+            challengers = list()
+            for i in range(0, TOURNAMENT_SIZE):
+                index = randint(0, len(individuals)-1)
+                challengers.append(individuals[index])
+
+            sorted(challengers, key=lambda c: c.fitness)
+            winners.append(challengers[0])
+
+        return winners
 
     @staticmethod
     def elites(individuals):
-        return individuals[:50]
+        number_of_parents = len(individuals)
+        return individuals[:number_of_parents]
 
 
 class Individual:
@@ -59,16 +73,40 @@ class Population:
             self.individuals.append(Individual(tmp))
 
     def reproduce(self):
-        elites = self.select(SelectMethod.elites)
+        # Select the old population to reproduce.
+        elites = self.select(SelectMethod.tournament)
+        # Create a new population
         self.individuals.clear()
         for a, b in zip(range(0, len(elites), 2), range(1, len(elites), 2)):
             self.individuals.append(hybridization(elites[a], elites[b]))
             self.individuals.append(hybridization(elites[b], elites[a]))
+
+        # Mutate new population.
+        for new_born in self.individuals:
+            self.mutate(new_born)
+
+        # Return the best of the old population (for records).
         return elites[0]
 
     def select(self, func):
         sorted(self.individuals, key=lambda x: x.fitness)
         return func(self.individuals)
+
+    def mutate(self, individual):
+        '''
+        Try to mutate every genes(cities) by swapping.
+        Will never swap the same city twice (see: position, distance)
+        Made to use two randoms instead of three.
+        '''
+        path_size = len(individual.path)
+        for pos in range(0, path_size):
+            # Do we mutate this gene?
+            if(random() < self.mutation_rate):
+                dist = randint(0, path_size)
+                new_pos = (pos + dist) % path_size
+                temp = individual.path[new_pos]
+                individual.path[new_pos] = individual.path[pos]
+                individual.path[pos] = temp
 
 
 class Window:
@@ -200,7 +238,7 @@ def ga_solve(file=None, gui=True, max_time=0):
 
     from time import time
     start_time = time()
-    pop = Population(100, 0.3)
+    pop = Population(100, 0.1)
     last_elites = list()
     while (((time()-start_time) < max_time) and max_time > 0) or False:
         last_elites.append(pop.reproduce())
