@@ -4,6 +4,7 @@ Probleme du voyageur
 
 import pygame
 from random import randint, shuffle, random
+from functools import reduce
 from math import sqrt
 
 class City:
@@ -43,9 +44,8 @@ class Chromosome:
                 sum += distance_between_cities(self.genes[i-1], self.genes[i])
 
             self.fit = 1/sum
-            return 1/sum
-        else:
-            return self.fit
+
+        return self.fit
 
 
 class Population:
@@ -54,15 +54,29 @@ class Population:
         self.size = size
         self.chromosomes = list()
         self.init_population()
+        self.best = None
 
     def __str__(self):
-        return str(self.chromosomes[0])
+        msg=""
+        for chromosome in self.chromosomes:
+            msg += f"\n{chromosome}"
+        msg += f"\nBest chromosome: {self.best_chromosome}"
+
+        return msg
 
     def init_population(self):
         for i in range(0, self.size):
             tmp = list(cities)
             shuffle(tmp)
             self.chromosomes.append(Chromosome(tmp))
+
+    @property
+    def best_chromosome(self):
+        """Return the best chromosome."""
+        if self.best is None:
+            self.best = max(self.chromosomes, key=lambda c : c.fitness)
+
+        return self.best
 
 
 class Window:
@@ -121,8 +135,14 @@ class Window:
 
 class GA:
     def __init__(self, population_size, mutation_rate):
-        self.pop_size = population_size
-        self.mut_rate = mutation_rate
+        self.population = Population(population_size)
+        self.population_size = population_size
+        self.mutation_rate = mutation_rate
+        self.tournament_size = 5 # Should vary depending on input. Does not.
+        self.avg_fit = 0
+
+    def __str__(self):
+        return f"{self.population}\navg_fitness: {self.avg_fitness}"
 
     def mutate(chromosome):
         """Mutate the chromosome by swapping.
@@ -140,7 +160,7 @@ class GA:
                 individual.genes[new_pos] = individual.genes[pos]
                 individual.genes[pos] = temp
 
-    def crossover(a: Chromosome, b: Chromosome):
+    def crossover(self, a: Chromosome, b: Chromosome):
         fa = True
         fb = True
         # Choose random town, find where it is within a and b.
@@ -173,11 +193,21 @@ class GA:
             # Add rest of rows at random.
             shuffle(c)  # O(n).
             g.extend(c) # O(k).
-        return Individual(g)
+        return Chromosome(g)
 
-    def select(self, func):
+    def select(self):
+        parents = SelectionMethod.tournament(
+            self.population.chromosomes,
+            self.tournament_size)
+        return parents
 
-        pass
+    @property
+    def avg_fitness(self):
+        cs = self.population.chromosomes
+        sum = 0
+        for c in cs:
+            sum += c.fitness
+        return sum / len(cs)
 
 
 class SelectionMethod:
@@ -199,8 +229,8 @@ class SelectionMethod:
         return winners
 
 
-def genes_length(genes : list):
-    """Return the length of a genes."""
+def path_length(genes : list):
+    """Return the length of a path."""
     sum = 0
     for i in range(1, len(genes)):
         sum += sqrt( distance_between_cities(genes[i-1], genes[i]) )
@@ -213,7 +243,7 @@ def distance_between_cities(a: City, b: City):
 
 
 def ga_solve(file=None, gui=True, max_time=0):
-
+    # Input management.
     global cities
     cities = list()
     if file is not None:
@@ -222,9 +252,10 @@ def ga_solve(file=None, gui=True, max_time=0):
         win = Window()
         win.show()
 
+    # Start AG.
     from time import time
     start_time = time()
-    population = Population(100)
+    ga = GA(100, 0.015)
 
     best_chromosomes = list()
     while ((time()-start_time) < max_time) or False:
@@ -234,14 +265,30 @@ def ga_solve(file=None, gui=True, max_time=0):
     #return best_chromosomes[0].fitness, [city.name for city in best_chromosomes[0].genes]
 
     # Testing
-    for chromosome in population.chromosomes:
-        print(chromosome)
+    print(ga)
+
+    print("---------------- PARENTS --------------------")
+
+    ga.population.chromosomes = ga.select()
+    print(ga)
+
 
     print("---------------- NEW GEN --------------------")
+
+    parents = ga.population.chromosomes
+    new_population = list()
+
+    for a, b in zip(range(0, len(parents), 2), range(1, len(parents), 2)):
+        new_population.append(ga.crossover(parents[a], parents[b]))
+        new_population.append(ga.crossover(parents[b], parents[a]))
+
+    ga.population.chromosomes = new_population
+
+    print(ga)
+
+    print("---------------- MUTATION --------------------")
+
     
-    new_gen = SelectionMethod.tournament(population.chromosomes, 3)
-    for chromosome in new_gen:
-        print(chromosome)
 
     return None, None
 
