@@ -125,8 +125,8 @@ class GA:
         self.mut_rate = mutation_rate
 
     def mutate(chromosome):
-        """Mutate the chromosome by swapping..
-        Will never swap the same genes twice (see: position, distance)
+        """Mutate the chromosome by swapping.
+        Will never swap a gene with itself. (see: position, distance)
         Made to use two random only.
         """
         genes_size = len(chromosome.genes)
@@ -135,6 +135,7 @@ class GA:
             if(random() < self.mutation_rate):
                 dist = randint(0, genes_size)
                 new_pos = (pos + dist) % genes_size
+                # Old school switch (not enough space horizontaly).
                 temp = individual.genes[new_pos]
                 individual.genes[new_pos] = individual.genes[pos]
                 individual.genes[pos] = temp
