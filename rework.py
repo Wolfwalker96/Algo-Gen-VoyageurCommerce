@@ -144,7 +144,7 @@ class GA:
         fa = True
         fb = True
         # Choose random town, find where it is within a and b.
-        n = len(a.genes)
+        n = len(a.genes) # O(1).
         start_town = a.genes[randint(0, n-1)]
         x = a.genes.index(start_town)
         y = b.genes.index(start_town)
@@ -158,22 +158,45 @@ class GA:
             by = a.genes[y]
             if fa is True:
                 if ax not in g:
-                    g.insert(0, ax)
-                    c.remove(ax) # Too slow!
+                    g.insert(0, ax) # O(1).
+                    c.remove(ax)    # O(n).
                 else:
                     fa = False
 
             if fb is True:
                 if by not in g:
-                    g.append(by)
-                    c.remove(by)
+                    g.append(by) # O(1).
+                    c.remove(by) # O(n).
                 else:
                     fb = False
         if len(g) < n:
             # Add rest of rows at random.
-            shuffle(c)
-            g.extend(c)
+            shuffle(c)  # O(n).
+            g.extend(c) # O(k).
         return Individual(g)
+
+    def select(self, func):
+
+        pass
+
+
+class SelectionMethod:
+
+    @staticmethod
+    def tournament(chromosomes, tournament_size):
+        winners = list()
+        # Select 'n' winners.
+        for i in range(0, len(chromosomes)):
+            challengers = list()
+            # Select 'm' challengers.
+            for i in range(0, tournament_size):
+                index = randint(0, len(chromosomes)-1)
+                challengers.append(chromosomes[index])
+
+            winner = max(challengers, key=lambda c : c.fitness)
+            winners.append(winner)
+
+        return winners
 
 
 def genes_length(genes : list):
@@ -212,6 +235,12 @@ def ga_solve(file=None, gui=True, max_time=0):
 
     # Testing
     for chromosome in population.chromosomes:
+        print(chromosome)
+
+    print("---------------- NEW GEN --------------------")
+    
+    new_gen = SelectionMethod.tournament(population.chromosomes, 3)
+    for chromosome in new_gen:
         print(chromosome)
 
     return None, None
