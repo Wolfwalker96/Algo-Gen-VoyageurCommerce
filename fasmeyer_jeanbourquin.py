@@ -12,9 +12,9 @@ Probleme du voyageur
 '''
 
 import pygame
-from random import randint, shuffle, random
+from random import randint, shuffle, random, uniform
 from functools import reduce
-from math import sqrt, pi, e
+from math import sqrt, pi, e, sin
 
 class City:
 
@@ -157,13 +157,20 @@ class Window:
 
 
 class GA:
-    def __init__(self, population_size = 100, mutation_rate = 0.05, elitism = True, tournament_size = 5):
+    def __init__(self,
+                 population_size = 100,
+                 mutation_rate = 0.05,
+                 elitism = True,
+                 tournament_ratio = 0.5):
         self.population = Population(population_size)
         self.population_size = population_size
         self.mutation_rate = mutation_rate
         self.elitism = elitism
-        self.tournament_size = tournament_size
+        # Nb of challengers ratio population.
+        self.tournament_ratio = tournament_ratio
         self.chosen_one = self.population.best_chromosome
+        # From start to end, from 100% to 0%
+        self.process = 1.0
 
     def __str__(self):
         return f"{self.population}"
@@ -222,12 +229,36 @@ class GA:
         return Chromosome(g)
 
     def selection(self):
-        '''The more chromosomes in the tournament, the more processing
-        power will be required.'''
-        parents = SelectionMethod.tournament(
-            self.population.chromosomes,
-            self.tournament_size)
-        return parents
+        chromo = self.population.chromosomes
+        winners = list()
+
+        # Partage l'importance des algorithmes de sélection.
+        end_process = self.process
+        nb_roulette = int(end_process * len(chromo))
+        nb_roulette += nb_roulette % 2
+        nb_tournament = len(chromo) - nb_roulette
+
+        if nb_roulette > 0:
+            # Définit des bornes [n,m] pour la roulette.
+            if nb_tournament > 0:
+                start_roulette = randint(0, len(chromo)-nb_roulette)
+            else:
+                start_roulette = 0
+            end_roulette = int(start_roulette + nb_roulette)
+            # Commence la sélection.
+            roulette_winners = SelectionMethod.roulette(
+                chromo[start_roulette:end_roulette])
+            # Rend le résultat.
+            winners.extend(roulette_winners)
+
+        if nb_tournament > 0:
+            # Commence la sélection.
+            tournament_winners = SelectionMethod.tournament(
+                chromo, self.tournament_ratio, nb_tournament)
+            # Rend le résultat.
+            winners.extend(tournament_winners)
+
+        return winners
 
     def run_step(self):
         """Run one step, create a new generation from the parents."""
@@ -258,17 +289,26 @@ class GA:
 class SelectionMethod:
 
     @staticmethod
-    def tournament(chromosomes, tournament_size):
+    def tournament(chromosomes, tournament_ratio, nb_parents = None):
         """Classic tournament selection. With 050, works well with
-        values of 0.5 (wtf?), uses O(n * param) ressources, approx
+        values of 0.5 (strong elitisme), uses O(n * param) ressources, approx
         O(n*n/2). bad bad bad.
         """
+        if nb_parents is None:
+            nb_parents = len(chromosomes)
+
+        if nb_parents == 0:
+            return None
+
         winners = list()
-        # Select 'n' winners.
-        for i in range(0, len(chromosomes)):
+        # Select 'n' winners (parents).
+        for i in range(0, nb_parents):
             challengers = list()
             # Select 'm' challengers.
-            for i in range(0, tournament_size):
+            nb_challengers = int(nb_parents * tournament_ratio)
+            if nb_challengers <= 1:
+                nb_challengers = 2
+            for i in range(0, nb_challengers):
                 index = randint(0, len(chromosomes)-1)
                 challengers.append(chromosomes[index])
 
@@ -278,17 +318,27 @@ class SelectionMethod:
         return winners
 
     @staticmethod
-    def tournament(chromosomes):
-        winners = list()
+    def roulette(chromosomes):
+        if len(chromosomes) == 0:
+            return None
+
         sum = 0
-        for i in range(0, len(chromosomes)):
-            sum += chromosomes.fitness
+        for c in chromosomes:
+            sum += c.fitness
 
         ratio = 1/sum
-        for i in range(0, len(chromosomes)):
-            choice = random()
-            for j in range(0, len(chromosomes)):
-                pass
+        winners = list()
+
+        for cromo in chromosomes:
+            cumulated = 0
+            rdm_select = random()
+            for c in chromosomes:
+                threshold = cumulated + (c.fitness*ratio)
+                if rdm_select <= threshold:
+                    winners.append(c)
+                    break
+                cumulated = threshold
+
 
         return winners
 
@@ -307,11 +357,6 @@ def distance_between_cities(a: City, b: City):
     return abs(a.pos_x - b.pos_x)**2+abs(a.pos_y-b.pos_y)**2
 
 
-def stirling(n):
-    """Used to determine the number of solutions."""
-    return sqrt(2*pi*n)*(n/e)**n
-
-
 def ga_solve(file=None, gui=True, max_time=0):
     # Input management.
     global cities
@@ -322,33 +367,37 @@ def ga_solve(file=None, gui=True, max_time=0):
         win = Window()
         win.show()
 
-    # Start AG.
     from time import time
     start_time = time()
 
+    # Configuration parameters.
     if len(cities) <= 10:
-        POPULATION_SIZE = 100
-        TOURNAMENT_SIZE = int(5)
+        POPULATION_SIZE = 50
+        TOURNAMENT_RATIO = 0.05
         MUTATION_RATE = 0.005
     elif len(cities) <= 50:
         POPULATION_SIZE = 130
-        TOURNAMENT_SIZE = int(POPULATION_SIZE*0.50)
+        TOURNAMENT_RATIO = 0.50
         MUTATION_RATE = 0.0053
     else:
-        POPULATION_SIZE = 150
-        TOURNAMENT_SIZE = int(POPULATION_SIZE*0.40)
-        MUTATION_RATE = 0.006
-
+        POPULATION_SIZE = 130
+        TOURNAMENT_RATIO = 0.6
+        MUTATION_RATE = 0.005
 
     ga = GA(
         population_size = POPULATION_SIZE,
         mutation_rate = MUTATION_RATE,
         elitism=True,
-        tournament_size = TOURNAMENT_SIZE)
+        tournament_ratio = TOURNAMENT_RATIO)
 
-    while ((time()-start_time) < max_time) or False:
+    # Only by tournament.
+    ga.process = 0
+
+    # Algorithm main loop.
+    while (time()-start_time) < max_time:
         ga.run_step()
 
+    # Return results.
     r1 = ga.chosen_one.path_length
     r2 = [city.name for city in ga.chosen_one.genes]
     return r1, r2
