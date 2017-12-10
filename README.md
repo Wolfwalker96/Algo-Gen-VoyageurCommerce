@@ -45,7 +45,7 @@ du temps imparti.
 * **process** % jusqu'à la fin de l'itéaration.	
 
 ### Mutation(chromosome)
-	Swap deux genes d'un chromosome.
+Swap deux genes d'un chromosome.
 * **Selection()** 
 	Sélection les chromosomes utilsé pour créer la nouvelle population.
 * **crossover(a: Chromosome, b: Chromosome)**
