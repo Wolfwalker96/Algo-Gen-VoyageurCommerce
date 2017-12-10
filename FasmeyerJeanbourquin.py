@@ -374,7 +374,7 @@ def ga_solve(file=None, gui=True, max_time=0):
 
     # Configuration parameters.
     if len(cities) <= 10:
-        POPULATION_SIZE = 50
+        POPULATION_SIZE = 100
         TOURNAMENT_RATIO = 0.05
         MUTATION_RATE = 0.008
     elif len(cities) <= 50:
