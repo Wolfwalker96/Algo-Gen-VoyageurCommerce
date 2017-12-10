@@ -76,26 +76,26 @@ zones définies arbitrairement, diminuant drastiquement 'b'.
 
 Résultats obtenus avec PVC_Tester
 ---------------------------------
-data\pb005.txt (1s);time: 1.001699447631836, maxtime: 1, tolerance: 1.05
-903; parfait!
+data\pb005.txt (1s);time: 1.001699447631836, maxtime: 1, tolerance: 1.05,
+path length: 903; parfait!
 
-data\pb010.txt (5s);time: 5.001549482345581, maxtime: 5, tolerance: 5.25
-1490; parfait!
+data\pb010.txt (5s);time: 5.001549482345581, maxtime: 5, tolerance: 5.25,
+path length: 1490; parfait!
 
-data\pb010.txt (10s);time: 10.000122785568237, maxtime: 10, tolerance: 10.5
-1490; parfait!
+data\pb010.txt (10s);time: 10.000122785568237, maxtime: 10, tolerance: 10.5,
+path length: 1490; parfait!
 
-data\pb050.txt (30s);time: 30.036350965499878, maxtime: 30, tolerance: 31.5
-3923; ok!
+data\pb050.txt (30s);time: 30.036350965499878, maxtime: 30, tolerance: 31.5,
+path length: 3923; ok!
 
-data\pb050.txt (60s);time: 60.03469133377075, maxtime: 60, tolerance: 63.0
-3231; ok!
+data\pb050.txt (60s);time: 60.03469133377075, maxtime: 60, tolerance: 63.0,
+path length: 3231; ok!
 
-data\pb100.txt (20s);time: 20.030221939086914, maxtime: 20, tolerance: 21.0
-8665; mauvais!
+data\pb100.txt (20s);time: 20.030221939086914, maxtime: 20, tolerance: 21.0,
+path length: 8665; mauvais!
 
-data\pb100.txt (90s);time: 90.03399991989136, maxtime: 90, tolerance: 94.5
-6836; mauvais!
+data\pb100.txt (90s);time: 90.03399991989136, maxtime: 90, tolerance: 94.5,
+path length: 6836; mauvais!
 
 L'on remarquera que notre algorithme n'arrive que très difficilement à trouver de
 nouvelles solutions (minimum local), l'algorithme de sélection ne laisse que peu 
