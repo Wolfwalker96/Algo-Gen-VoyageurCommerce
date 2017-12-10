@@ -178,7 +178,7 @@ class GA:
     def mutate(self, chromosome):
         """Mutate the chromosome by swapping."""
         genes_size = len(chromosome.genes)
-        max_mutations = int(genes_size*0.1)+2
+        max_mutations = int(genes_size*0.05)+2
         start = randint(0, max_mutations-1)
         for pos in range(start, genes_size, max_mutations):
             # Do we mutate this chromosome?
@@ -374,7 +374,7 @@ def ga_solve(file=None, gui=True, max_time=0):
     if len(cities) <= 10:
         POPULATION_SIZE = 50
         TOURNAMENT_RATIO = 0.05
-        MUTATION_RATE = 0.005
+        MUTATION_RATE = 0.008
     elif len(cities) <= 50:
         POPULATION_SIZE = 130
         TOURNAMENT_RATIO = 0.50
@@ -393,9 +393,14 @@ def ga_solve(file=None, gui=True, max_time=0):
     # Only by tournament.
     ga.process = 0
 
+    old_f = 0
+    df = 0
+    df_l = []
+    run = True
     # Algorithm main loop.
-    while (time()-start_time) < max_time:
+    while ((time()-start_time) < max_time or max_time == 0) and run is True:
         ga.run_step()
+
 
     # Return results.
     r1 = ga.chosen_one.path_length
