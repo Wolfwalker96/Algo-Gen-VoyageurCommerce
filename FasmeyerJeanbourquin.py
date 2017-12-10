@@ -5,6 +5,7 @@ Probleme du voyageur
 import pygame
 from random import randint, shuffle, random
 from math import sqrt
+from heapq import nlargest, nsmallest
 
 
 class City:
@@ -243,8 +244,10 @@ class GA:
 
         if nb_tournament > 0:
             # Commence la sélection.
+            elitism_winners = SelectionMethod.elitist(chromo)
+
             tournament_winners = SelectionMethod.tournament(
-                chromo, self.tournament_ratio, nb_tournament)
+                elitism_winners, self.tournament_ratio, nb_tournament)
             # Rend le résultat.
             winners.extend(tournament_winners)
 
@@ -330,6 +333,16 @@ class SelectionMethod:
 
         return winners
 
+    @staticmethod
+    def elitist(chromosomes):
+        # Get 50% of the poopulation, twice.
+        winners = nlargest(
+            int(len(chromosomes)*0.5),
+            chromosomes,
+            key=lambda c : c.fitness)
+        winners.extend(list(winners))
+        return winners
+
 
 def path_length(genes: list):
     """Return the length of a path."""
@@ -365,13 +378,13 @@ def ga_solve(file=None, gui=True, max_time=0):
         TOURNAMENT_RATIO = 0.05
         MUTATION_RATE = 0.008
     elif len(cities) <= 50:
-        POPULATION_SIZE = 130
-        TOURNAMENT_RATIO = 0.50
-        MUTATION_RATE = 0.013
+        POPULATION_SIZE = 230
+        TOURNAMENT_RATIO = 0.23
+        MUTATION_RATE = 0.03
     else:
-        POPULATION_SIZE = 130
-        TOURNAMENT_RATIO = 0.6
-        MUTATION_RATE = 0.005
+        POPULATION_SIZE = 100
+        TOURNAMENT_RATIO = 0.25
+        MUTATION_RATE = 0.012
 
     ga = GA(
         population_size=POPULATION_SIZE,
