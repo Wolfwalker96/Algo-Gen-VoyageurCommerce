@@ -136,7 +136,6 @@ class Window:
                     self.draw(cities)
 
     def draw_path(self, cities):
-
         self.screen.fill(0)
         pygame.draw.lines(self.screen, self.city_color, True, [(city.pos_x, city.pos_y) for city in cities])
         text = self.font.render("Un chemin, pas le meilleur!", True, self.font_color)
@@ -405,13 +404,17 @@ if __name__ == "__main__":
     file = None
     gui = True
     max_time = 0
+    shown_args = list()
     for i, arg in enumerate(argv[1:]):
-        if arg == "--nogui":
-            gui = False
-        elif arg == "--maxtime":
-            max_time = int(argv[i+2])
-        else:
-            file = arg
+        if arg not in shown_args:
+            if arg == "--nogui":
+                gui = False
+            elif arg == "--maxtime":
+                max_time = int(argv[i+2])
+                shown_args.append(argv[i + 2])
+            else:
+                file = arg
+            shown_args.append(arg)
 
     length, genes = ga_solve(file=file, max_time=max_time, gui=gui)
     print(f"Distance : {int(length)}\nChemin : {', '.join(genes)}")
