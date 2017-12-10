@@ -135,16 +135,14 @@ class Window:
                                        pos_y=pygame.mouse.get_pos()[1]))
                     self.draw(cities)
 
+    def draw_path(self, cities):
+
         self.screen.fill(0)
         pygame.draw.lines(self.screen, self.city_color, True, [(city.pos_x, city.pos_y) for city in cities])
         text = self.font.render("Un chemin, pas le meilleur!", True, self.font_color)
         textRect = text.get_rect()
         self.screen.blit(text, textRect)
         pygame.display.flip()
-
-        while True:
-            event = pygame.event.wait()
-            if event.type == KEYDOWN: break
 
 
 class GA:
@@ -278,7 +276,7 @@ class GA:
 class SelectionMethod:
 
     @staticmethod
-    def tournament(chromosomes, tournament_ratio, nb_parents = None):
+    def tournament(chromosomes, tournament_ratio, nb_parents=None):
         """Classic tournament selection. With 050, works well with
         values of 0.5 (strong elitisme), uses O(n * param) ressources, approx
         O(n*n/2). bad bad bad.
@@ -301,7 +299,7 @@ class SelectionMethod:
                 index = randint(0, len(chromosomes)-1)
                 challengers.append(chromosomes[index])
 
-            winner = max(challengers, key=lambda c : c.fitness)
+            winner = max(challengers, key=lambda c: c.fitness)
             winners.append(winner)
 
         return winners
@@ -355,6 +353,9 @@ def ga_solve(file=None, gui=True, max_time=0):
     else:
         win = Window()
         win.show()
+    if gui:
+        win = Window()
+        win.show()
 
     from time import time
     start_time = time()
@@ -388,6 +389,8 @@ def ga_solve(file=None, gui=True, max_time=0):
     while ((time()-start_time) < max_time or max_time == 0) and continue_run:
         ga.run_step()
         old_chosen_one.append(ga.chosen_one.fitness)
+        if gui:
+            win.draw_path(ga.chosen_one.genes)
         if max_time == 0:
             if old_chosen_one[-15:-1].count(old_chosen_one[-1]) >= 5:
                 continue_run = False
