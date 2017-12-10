@@ -92,14 +92,16 @@ data\pb100.txt (90s);time: 90.03399991989136, maxtime: 90, tolerance: 94.5
 6836; mauvais!
 
 L'on remarquera que notre algorithme n'arrive que très difficilement à trouver de
-nouvelles solutions, l'algorithme de sélection ne laisse que peu de place à la
-diversitée.
+nouvelles solutions (minimum local), l'algorithme de sélection ne laisse que peu 
+de place à la diversitée tandis que le crossover est lourd et limite la taille de la
+population.
 
 Nous avons essayé de règler le problème en mélangeant les algorithmes de sélection,
 modifier dynamiquement les paramètres de mutation, sélection, taille de la population,
-etc en fonction du 100% (temps restant) avan la fin ou à l'aide de la dérivée. Rien n'y
-fait. Il va falloir améliorer le crossover (très lourd) et remplacer la modifier la fonction
-de sélection. La mutation quand à elle ne semble pas poser plus de problèmes. 
+etc... en fonction du 100% (temps restant) avan la fin ou à l'aide de la dérivée. Rien n'y
+fait. Il va falloir améliorer le crossover (très lourd) ou modifier la fonction
+de sélection. La mutation quand à elle pourait être un peu plus légère en ne faisant
+qu'un certain nombre de modifications par cycle.
 
 En simple:
 	1.Le crossover nous rend la tâche proprotionellement plus dur en fonciton du nb de ville
@@ -107,4 +109,5 @@ En simple:
 	2.Le turnament() fait des actions inutiles ou redondantes et est très lourd étrangement
 	il marche le mieud quand il peut utiliser 50% de la population comme challengers... horreur!
 	Autant le remplacer par une fonciton élitiste puis l'utiliser sur le survivants par groupes
-	de 5 à 7. 
+	de 5 à 7.
+	3.La mutation d'ordre O(2g) avec 'g' étant le nombre de gènes, devrait être simplifiée.

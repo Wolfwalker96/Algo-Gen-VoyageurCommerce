@@ -176,17 +176,16 @@ class GA:
         return f"{self.population}"
 
     def mutate(self, chromosome):
-        """Mutate the chromosome by swapping.
-        Will never swap a gene with itself. (see: position, distance)
-        Made to use two 'randint()' only.
-        """
+        """Mutate the chromosome by swapping."""
         genes_size = len(chromosome.genes)
-        for pos in range(0, genes_size):
+        max_mutations = int(genes_size*0.1)+2
+        start = randint(0, max_mutations-1)
+        for pos in range(start, genes_size, max_mutations):
             # Do we mutate this chromosome?
             if(random() < self.mutation_rate):
                 dist = randint(0, genes_size)
                 new_pos = (pos + dist) % genes_size
-                # Old school switch (not enough space horizontaly).
+                # Old school swap (not enough space horizontaly).
                 temp = chromosome.genes[new_pos]
                 chromosome.genes[new_pos] = chromosome.genes[pos]
                 chromosome.genes[pos] = temp
@@ -361,6 +360,7 @@ def ga_solve(file=None, gui=True, max_time=0):
     # Input management.
     global cities
     cities = list()
+
     if file is not None:
         City.load_cities(file)
     else:
@@ -378,7 +378,7 @@ def ga_solve(file=None, gui=True, max_time=0):
     elif len(cities) <= 50:
         POPULATION_SIZE = 130
         TOURNAMENT_RATIO = 0.50
-        MUTATION_RATE = 0.0053
+        MUTATION_RATE = 0.013
     else:
         POPULATION_SIZE = 130
         TOURNAMENT_RATIO = 0.6
