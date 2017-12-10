@@ -259,6 +259,10 @@ class SelectionMethod:
 
     @staticmethod
     def tournament(chromosomes, tournament_size):
+        """Classic tournament selection. With 050, works well with
+        values of 0.5 (wtf?), uses O(n * param) ressources, approx
+        O(n*n/2). bad bad bad.
+        """
         winners = list()
         # Select 'n' winners.
         for i in range(0, len(chromosomes)):
@@ -270,6 +274,21 @@ class SelectionMethod:
 
             winner = max(challengers, key=lambda c : c.fitness)
             winners.append(winner)
+
+        return winners
+
+    @staticmethod
+    def tournament(chromosomes):
+        winners = list()
+        sum = 0
+        for i in range(0, len(chromosomes)):
+            sum += chromosomes.fitness
+
+        ratio = 1/sum
+        for i in range(0, len(chromosomes)):
+            choice = random()
+            for j in range(0, len(chromosomes)):
+                pass
 
         return winners
 
@@ -306,8 +325,12 @@ def ga_solve(file=None, gui=True, max_time=0):
     # Start AG.
     from time import time
     start_time = time()
-    
-    if len(cities) <= 50:
+
+    if len(cities) <= 10:
+        POPULATION_SIZE = 100
+        TOURNAMENT_SIZE = int(5)
+        MUTATION_RATE = 0.005
+    elif len(cities) <= 50:
         POPULATION_SIZE = 130
         TOURNAMENT_SIZE = int(POPULATION_SIZE*0.50)
         MUTATION_RATE = 0.0053
