@@ -20,7 +20,7 @@ Python 3.5 Ready, Romain Claret
 # Ces modules doivent �tre dans le PYTHONPATH; p.ex. dans le r�pertoire courant
 
 modules = (
-	"fasmeyer_jeanbourquin",
+	"FasmeyerJeanbourquin",
 	# �ventuellement d'autres modules pour comparer plusieurs versions...
 )
 

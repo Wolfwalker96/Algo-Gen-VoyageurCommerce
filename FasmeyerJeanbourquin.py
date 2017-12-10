@@ -2,19 +2,10 @@
 Probleme du voyageur
 """
 
-'''
-1. Crossover doesn't work well with big path..
-1.1 We can separate cities in area within a 'r' radius.
-
-2. Try other selection algorithms (wheel), ours doesn't work well with big values.
-
-3. ADD dynamic parameter modification?
-'''
-
 import pygame
-from random import randint, shuffle, random, uniform
-from functools import reduce
-from math import sqrt, pi, e, sin
+from random import randint, shuffle, random
+from math import sqrt
+
 
 class City:
 
@@ -73,7 +64,7 @@ class Population:
         self.init_population()
 
     def __str__(self):
-        msg=""
+        msg = ""
         for chromosome in self.chromosomes:
             msg += f"{chromosome}\n"
         msg += f"Avg_fitness: {self.avg_fitness}\n"
@@ -158,10 +149,10 @@ class Window:
 
 class GA:
     def __init__(self,
-                 population_size = 100,
-                 mutation_rate = 0.05,
-                 elitism = True,
-                 tournament_ratio = 0.5):
+                 population_size=100,
+                 mutation_rate=0.05,
+                 elitism=True,
+                 tournament_ratio=0.5):
         self.population = Population(population_size)
         self.population_size = population_size
         self.mutation_rate = mutation_rate
@@ -182,7 +173,7 @@ class GA:
         start = randint(0, max_mutations-1)
         for pos in range(start, genes_size, max_mutations):
             # Do we mutate this chromosome?
-            if(random() < self.mutation_rate):
+            if random() < self.mutation_rate:
                 dist = randint(0, genes_size)
                 new_pos = (pos + dist) % genes_size
                 # Old school swap (not enough space horizontaly).
@@ -196,7 +187,7 @@ class GA:
         fa = True
         fb = True
         # Choose random town, find where it is within a and b.
-        n = len(a.genes) # O(1).
+        n = len(a.genes)  # O(1).
         start_town = a.genes[randint(0, n-1)]
         x = a.genes.index(start_town)
         y = b.genes.index(start_town)
@@ -210,21 +201,21 @@ class GA:
             by = a.genes[y]
             if fa is True:
                 if ax not in g:
-                    g.insert(0, ax) # O(1).
-                    c.remove(ax)    # O(n).
+                    g.insert(0, ax)  # O(1).
+                    c.remove(ax)     # O(n).
                 else:
                     fa = False
 
             if fb is True:
                 if by not in g:
-                    g.append(by) # O(1).
-                    c.remove(by) # O(n).
+                    g.append(by)  # O(1).
+                    c.remove(by)  # O(n).
                 else:
                     fb = False
         if len(g) < n:
             # Add rest of rows at random.
-            shuffle(c)  # O(n).
-            g.extend(c) # O(k).
+            shuffle(c)   # O(n).
+            g.extend(c)  # O(k).
         return Chromosome(g)
 
     def selection(self):
@@ -279,8 +270,7 @@ class GA:
         self.population.chromosomes = new_population
 
         # Evaluation (always keep the best one)
-        if (self.chosen_one.fitness <
-            self.population.best_chromosome.fitness):
+        if self.chosen_one.fitness < self.population.best_chromosome.fitness:
             # Bad indentation PEP8.
             self.chosen_one = self.population.best_chromosome
 
@@ -338,16 +328,15 @@ class SelectionMethod:
                     break
                 cumulated = threshold
 
-
         return winners
 
 
-def path_length(genes : list):
+def path_length(genes: list):
     """Return the length of a path."""
     sum = 0
     for i in range(1, len(genes)):
-        sum += sqrt( distance_between_cities(genes[i-1], genes[i]) )
-    sum += sqrt( distance_between_cities(genes[0], genes[len(genes)-1]) )
+        sum += sqrt(distance_between_cities(genes[i-1], genes[i]))
+    sum += sqrt(distance_between_cities(genes[0], genes[len(genes)-1]))
     return sum
 
 
@@ -385,28 +374,27 @@ def ga_solve(file=None, gui=True, max_time=0):
         MUTATION_RATE = 0.005
 
     ga = GA(
-        population_size = POPULATION_SIZE,
-        mutation_rate = MUTATION_RATE,
+        population_size=POPULATION_SIZE,
+        mutation_rate=MUTATION_RATE,
         elitism=True,
-        tournament_ratio = TOURNAMENT_RATIO)
+        tournament_ratio=TOURNAMENT_RATIO)
 
     # Only by tournament.
     ga.process = 0
 
-    old_f = 0
-    df = 0
-    df_l = []
-    run = True
+    old_chosen_one = list()
+    continue_run = True
     # Algorithm main loop.
-    while ((time()-start_time) < max_time or max_time == 0) and run is True:
+    while ((time()-start_time) < max_time or max_time == 0) and continue_run:
         ga.run_step()
-
-
+        old_chosen_one.append(ga.chosen_one.fitness)
+        if max_time == 0:
+            if old_chosen_one[-15:-1].count(old_chosen_one[-1]) >= 5:
+                continue_run = False
     # Return results.
     r1 = ga.chosen_one.path_length
     r2 = [city.name for city in ga.chosen_one.genes]
     return r1, r2
-
 
 
 if __name__ == "__main__":
