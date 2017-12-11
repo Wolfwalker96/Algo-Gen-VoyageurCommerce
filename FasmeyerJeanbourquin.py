@@ -3,7 +3,7 @@ Probleme du voyageur
 """
 
 import pygame
-from random import randint, shuffle, random
+from random import randint, shuffle, random, uniform
 from math import sqrt
 from heapq import nlargest, nsmallest
 
@@ -150,16 +150,20 @@ class GA:
                  population_size=100,
                  mutation_rate=0.05,
                  elitism=True,
-                 tournament_ratio=0.5):
+                 roulette_ratio=0.7,
+                 tournament_ratio=0.2,
+                 elitism_ratio=0.1,
+                 tournament_size=5):
         self.population = Population(population_size)
         self.population_size = population_size
         self.mutation_rate = mutation_rate
+        # Put the chosen one back within the population. Chosen one can be old.
         self.elitism = elitism
-        # Nb of challengers ratio population.
+        self.roulette_ratio = roulette_ratio
         self.tournament_ratio = tournament_ratio
+        self.elitism_ratio = elitism_ratio
+        self.tournament_size = tournament_size
         self.chosen_one = self.population.best_chromosome
-        # From start to end, from 100% to 0%
-        self.process = 1.0
 
     def __str__(self):
         return f"{self.population}"
@@ -167,6 +171,9 @@ class GA:
     def mutate(self, chromosome):
         """Mutate the chromosome by swapping."""
         genes_size = len(chromosome.genes)
+        ''' Reduce the number of mutation checks by a factor of 20.
+        Rise the mutation rate and get the same result for processing pow.
+        '''
         max_mutations = int(genes_size*0.05)+2
         start = randint(0, max_mutations-1)
         for pos in range(start, genes_size, max_mutations):
@@ -217,37 +224,33 @@ class GA:
         return Chromosome(g)
 
     def selection(self):
-        chromo = self.population.chromosomes
         winners = list()
+        chromosomes = self.population.chromosomes
 
-        # Partage l'importance des algorithmes de sélection.
-        end_process = self.process
-        nb_roulette = int(end_process * len(chromo))
-        nb_roulette += nb_roulette % 2
-        nb_tournament = len(chromo) - nb_roulette
+        # Select parents for the new population.
+        nb_roulette = int(self.population_size * self.roulette_ratio)
+        nb_elitism = int(self.population_size * self.elitism_ratio)
+        nb_tournament = int(self.population_size * self.tournament_ratio)
 
-        if nb_roulette > 0:
-            # Définit des bornes [n,m] pour la roulette.
-            if nb_tournament > 0:
-                start_roulette = randint(0, len(chromo)-nb_roulette)
-            else:
-                start_roulette = 0
-            end_roulette = int(start_roulette + nb_roulette)
-            # Commence la sélection.
-            roulette_winners = SelectionMethod.roulette(
-                chromo[start_roulette:end_roulette])
-            # Rend le résultat.
-            winners.extend(roulette_winners)
+        total = nb_roulette + nb_elitism + nb_tournament
+        if(total < self.population_size):
+            nb_roulette += self.population_size - total
 
-        if nb_tournament > 0:
-            # Commence la sélection.
-            elitism_winners = SelectionMethod.elitist(chromo)
+        winners1 = SelectionMethod.elitist(chromosomes, nb_elitism)
+        winners2 = SelectionMethod.roulette(chromosomes, nb_roulette)
+        winners3 = SelectionMethod.tournament(
+            chromosomes, nb_tournament, self.tournament_size)
 
-            tournament_winners = SelectionMethod.tournament(
-                elitism_winners, self.tournament_ratio, nb_tournament)
-            # Rend le résultat.
-            winners.extend(tournament_winners)
+        if self.population_size != len(chromosomes):
+            print(f"ERROR! POPULATION COUNT OUT OF RANGE!")
+            print(f"pop: {len(self.population.chromosomes)}")
+            print(f"elit: {len(winners1)}")
+            print(f"roulette: {len(winners2)}")
+            print(f"tournament: {len(winners3)}")
 
+        winners.extend(winners1)
+        winners.extend(winners2)
+        winners.extend(winners3)
         return winners
 
     def run_step(self):
@@ -278,25 +281,20 @@ class GA:
 class SelectionMethod:
 
     @staticmethod
-    def tournament(chromosomes, tournament_ratio, nb_parents=None):
-        """Classic tournament selection. With 050, works well with
-        values of 0.5 (strong elitisme), uses O(n * param) ressources, approx
-        O(n*n/2). bad bad bad.
-        """
-        if nb_parents is None:
-            nb_parents = len(chromosomes)
-
-        if nb_parents == 0:
-            return None
-
+    def tournament(chromosomes, nb_winners, tournament_size = 2):
+        """Classical tournament selection."""
         winners = list()
+        if nb_winners == 0:
+            return winners
+
+        nb_challengers = int(nb_winners * tournament_size)
+        if nb_challengers <= 1:
+            nb_challengers = 2
+
         # Select 'n' winners (parents).
-        for i in range(0, nb_parents):
+        for i in range(0, nb_winners):
             challengers = list()
             # Select 'm' challengers.
-            nb_challengers = int(nb_parents * tournament_ratio)
-            if nb_challengers <= 1:
-                nb_challengers = 2
             for i in range(0, nb_challengers):
                 index = randint(0, len(chromosomes)-1)
                 challengers.append(chromosomes[index])
@@ -307,37 +305,41 @@ class SelectionMethod:
         return winners
 
     @staticmethod
-    def roulette(chromosomes):
-        if len(chromosomes) == 0:
-            return None
+    def roulette(chromosomes, nb_winners):
+        """Roulette selection."""
+        winners = list()
+        if nb_winners == 0:
+            return winners
 
         sum = 0
         for c in chromosomes:
             sum += c.fitness
 
         ratio = 1/sum
-        winners = list()
-
-        for cromo in chromosomes:
+        for i in range(0, nb_winners):
             cumulated = 0
             rdm_select = random()
             for c in chromosomes:
                 threshold = cumulated + (c.fitness*ratio)
+
                 if rdm_select <= threshold:
                     winners.append(c)
                     break
                 cumulated = threshold
-
         return winners
 
     @staticmethod
-    def elitist(chromosomes):
-        # Get 50% of the poopulation, twice.
+    def elitist(chromosomes, nb_winners):
+        """Pure elitism."""
+        winners = list()
+        if nb_winners == 0:
+            return winners
+
         winners = nlargest(
-            int(len(chromosomes)*0.5),
+            nb_winners,
             chromosomes,
             key=lambda c : c.fitness)
-        winners.extend(list(winners))
+
         return winners
 
 
@@ -346,6 +348,7 @@ def path_length(genes: list):
     sum = 0
     for i in range(1, len(genes)):
         sum += sqrt(distance_between_cities(genes[i-1], genes[i]))
+
     sum += sqrt(distance_between_cities(genes[0], genes[len(genes)-1]))
     return sum
 
@@ -374,23 +377,44 @@ def ga_solve(file=None, gui=True, max_time=0):
 
     # Configuration parameters.
     if len(cities) <= 10:
-        POPULATION_SIZE = 100
-        TOURNAMENT_RATIO = 0.05
+        POPULATION_SIZE = 10
         MUTATION_RATE = 0.008
+        ROULETTE_RATIO=0.9
+        TOURNAMENT_RATIO=0
+        ELITISM_RATIO=0.2
+        TOURNAMENT_SIZE=5
     elif len(cities) <= 50:
         POPULATION_SIZE = 230
-        TOURNAMENT_RATIO = 0.23
         MUTATION_RATE = 0.03
+        ROULETTE_RATIO=0.7
+        TOURNAMENT_RATIO=0.2
+        ELITISM_RATIO=0.1
+        TOURNAMENT_SIZE=5
     else:
         POPULATION_SIZE = 100
-        TOURNAMENT_RATIO = 0.25
         MUTATION_RATE = 0.012
+        ROULETTE_RATIO=0.7
+        TOURNAMENT_RATIO=0.2
+        ELITISM_RATIO=0.1
+        TOURNAMENT_SIZE=5
+        '''
+    POPULATION_SIZE = 100
+    MUTATION_RATE = 0.03
+    ROULETTE_RATIO=0.8
+    TOURNAMENT_RATIO=0.1
+    ELITISM_RATIO=0.1
+    TOURNAMENT_SIZE=100
+    '''
 
     ga = GA(
         population_size=POPULATION_SIZE,
         mutation_rate=MUTATION_RATE,
         elitism=True,
-        tournament_ratio=TOURNAMENT_RATIO)
+        tournament_ratio=TOURNAMENT_RATIO,
+        elitism_ratio=ELITISM_RATIO,
+        roulette_ratio=ROULETTE_RATIO,
+        tournament_size=TOURNAMENT_SIZE
+        )
 
     # Only by tournament.
     ga.process = 0
@@ -406,6 +430,7 @@ def ga_solve(file=None, gui=True, max_time=0):
         if max_time == 0:
             if old_chosen_one[-15:-1].count(old_chosen_one[-1]) >= 5:
                 continue_run = False
+
     # Return results.
     r1 = ga.chosen_one.path_length
     r2 = [city.name for city in ga.chosen_one.genes]
